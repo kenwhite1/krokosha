@@ -1,0 +1,8 @@
+node_modules
+.git
+data
+app/dist
+*.sqlite
+*.sqlite-*
+.code-review-graph
+.DS_Store
