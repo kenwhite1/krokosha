@@ -22,6 +22,8 @@ import {
 import { toView } from '../../shared/view'
 import type { RoomStateDto, RoomDto } from '../../shared/types'
 import { recordResult } from './profiles'
+import { reportMatch } from './gg'
+import type { MatchMode } from '../../shared/gg'
 
 interface Seat {
   id: string // id игрока в движке: 'u<tgid>' для людей, 'bot1'... для ботов
@@ -49,6 +51,8 @@ interface Room {
   roundId: number // растёт каждый раунд; гасит «протухшие» таймеры
   timers: Set<ReturnType<typeof setTimeout>>
   startTimer: ReturnType<typeof setTimeout> | null
+  // id мест, успевших угадать слово меньше чем за 10 секунд («Телепат» в хабе).
+  telepaths: Set<string>
 }
 
 const rooms = new Map<string, Room>()
@@ -235,11 +239,33 @@ function finalize(room: Room): void {
   room.deadline = null
   if (!room.game || room.game.phase !== 'finished' || room.scored) return
   room.scored = true
+  const humans = room.seats.filter(s => !s.isBot && s.tgId != null)
+  const mode: MatchMode = room.quick ? 'multi' : 'friends'
+  // winnerId движка при равенстве очков достаётся первому из равных, так что
+  // «победа» по нему одна на всех ничейщиков. Для хаба считаем честно: делящие
+  // верхний счёт — ничья, а не «один выиграл, остальные проиграли».
+  const top = Math.max(...room.game.players.map(p => p.score))
+  const drawn = room.game.players.filter(p => p.score === top).length > 1
+  const ranked = [...room.game.players].sort((a, b) => b.score - a.score)
   for (const seat of room.seats) {
     if (seat.isBot || seat.tgId == null) continue
     const me = room.game.players.find(p => p.id === seat.id)
     const won = room.game.winnerId === seat.id
     recordResult(seat.tgId, 'online', won, me?.score ?? 0)
+    // Рапорт хабу: room.scored выше гарантирует один раз на партию, а ключ
+    // идемпотентности (код+время создания комнаты) — что повтор не доплатит.
+    reportMatch({
+      userId: seat.tgId,
+      idempotencyKey: `croc-${room.code}-${room.createdAt}-${seat.tgId}`,
+      result: (me?.score ?? 0) < top ? 'loss' : drawn ? 'draw' : 'win',
+      placement: ranked.findIndex(p => p.id === seat.id) + 1,
+      players: room.seats.length,
+      humanPlayers: humans.length,
+      score: me?.score ?? 0,
+      mode,
+      opponents: humans.filter(s => s.tgId !== seat.tgId).map(s => s.tgId as number),
+      stats: room.telepaths.has(seat.id) ? { signature: true } : undefined,
+    })
   }
 }
 
@@ -294,6 +320,7 @@ export function createRoom(tgId: number, name: string, difficulty: Difficulty = 
     roundId: 0,
     timers: new Set(),
     startTimer: null,
+    telepaths: new Set(),
   }
   rooms.set(code, room)
   return stateFor(room, tgId)
@@ -351,6 +378,7 @@ export function quickMatch(tgId: number, name: string): RoomStateDto {
     roundId: 0,
     timers: new Set(),
     startTimer: null,
+    telepaths: new Set(),
   }
   rooms.set(code, room)
   room.startTimer = setTimeout(() => {
@@ -381,8 +409,15 @@ export function actInRoom(code: string, tgId: number, action: Action): RoomState
   seat.lastSeen = Date.now()
 
   const before = room.version
+  const deadline = room.deadline
   doAction(room, action)
   if (room.version === before) return { error: 'illegal' }
+
+  // «Телепат»: угадал слово меньше чем за 10 секунд от начала раунда. Считаем
+  // до afterRoundEnd — тот гасит deadline, по которому и восстанавливается старт.
+  if (action.type === 'guess' && deadline != null && room.game?.roundWinnerId === seat.id) {
+    if (ROUND_MS - (deadline - Date.now()) < 10_000) room.telepaths.add(seat.id)
+  }
 
   if (room.game && room.game.phase !== 'explaining') afterRoundEnd(room, room.roundId)
   else if (action.type === 'reveal') scheduleBotGuesses(room, room.roundId) // подсказка ускоряет ботов

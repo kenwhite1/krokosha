@@ -73,6 +73,10 @@ let guessTimers: ReturnType<typeof setTimeout>[] = []
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let soloRoundId = 0
 let flyId = 0
+// Прогон соло-партии: id заводится на старте и служит хабу ключом идемпотентности
+// (соло-партий сервер не ведёт). telepath — успел угадать меньше чем за 10 секунд.
+let soloRunId = ''
+let soloTelepath = false
 
 function clearSoloTimers() {
   if (roundTimer) clearTimeout(roundTimer)
@@ -119,8 +123,14 @@ export const useStore = create<S>((set, get) => {
     if (!s) return
     const r = applyAction(s, action)
     if (r.error) { haptic('warn'); return }
+    const deadline = get().deadline
     set({ solo: r.state })
     present(r.events, get().youId)
+
+    // «Телепат»: сам угадал слово меньше чем за 10 секунд от начала раунда.
+    if (action.type === 'guess' && deadline != null && r.state.roundWinnerId === get().youId) {
+      if (ROUND_MS - (deadline - Date.now()) < 10_000) soloTelepath = true
+    }
 
     if (r.state.phase === 'finished') { finishGame(r.state); return }
     if (r.state.phase === 'roundEnd') {
@@ -212,7 +222,16 @@ export const useStore = create<S>((set, get) => {
     playSfx(youWon ? 'win' : 'lose')
     haptic(youWon ? 'success' : 'warn')
     set({ result: { youWon, youScore: me?.score ?? 0, winnerName: winner?.name ?? '-', standings } })
-    api.soloResult(youWon, me?.score ?? 0).then(r => set({ profile: r.profile })).catch(() => {})
+    api
+      .soloResult({
+        won: youWon,
+        score: me?.score ?? 0,
+        runId: soloRunId,
+        players: s.players.length,
+        telepath: soloTelepath,
+      })
+      .then(r => set({ profile: r.profile }))
+      .catch(() => {})
   }
 
   // -- ONLINE driver -------------------------------------------------------
@@ -327,6 +346,8 @@ export const useStore = create<S>((set, get) => {
         { id: 'bot3', name: 'Витя', isBot: true },
       ]
       const seed = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0
+      soloRunId = `${Date.now().toString(36)}-${seed.toString(36)}`
+      soloTelepath = false
       const game = createGame({ players, seed, totalRounds: 4 })
       set({
         mode: 'solo', youId, solo: game, screen: 'game',

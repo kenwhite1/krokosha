@@ -4,6 +4,7 @@ import { validateInitData, issueToken, verifyToken } from './auth'
 import type { Env } from './env'
 import { getOrCreateUser, getProfile, recordResult, topPlayers } from './profiles'
 import { createRoom, joinRoom, quickMatch, startRoom, actInRoom, getRoomState, leaveRoom } from './rooms'
+import { storeLaunchToken, reportMatch } from './gg'
 import { BOT_USERNAME } from './env'
 import type { Action } from '../../shared/engine'
 import type { Difficulty } from '../../shared/bots'
@@ -19,6 +20,7 @@ api.post('/auth', async c => {
   if (!v) return c.json({ error: 'invalid_init_data' }, 401)
   const name = [v.user.first_name, v.user.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Игрок'
   getOrCreateUser(v.user.id, name, v.user.username)
+  storeLaunchToken(v.user.id, v.startParam)
   const token = await issueToken(v.user.id)
   return c.json({ token, profile: getProfile(v.user.id), startParam: v.startParam, botUsername: BOT_USERNAME })
 })
@@ -38,10 +40,40 @@ api.get('/profile', c => c.json({ profile: getProfile(c.get('uid')) }))
 api.get('/leaderboard', c => c.json({ top: topPlayers(20) }))
 
 // записать законченную соло-партию (движок крутится на клиенте, мы храним итог)
+const soloSchema = z.object({
+  won: z.boolean(),
+  score: z.number(),
+  // id прогона: заводится клиентом на старте соло-партии и переживает повтор
+  // запроса. Хабу он нужен как ключ идемпотентности — сервер соло-партий не
+  // ведёт, и другого стабильного идентификатора у неё нет.
+  runId: z.string().max(64).regex(/^[A-Za-z0-9_-]+$/).optional(),
+  // размер соло-стола (игрок + боты) — его знает только клиент
+  players: z.number().int().min(1).max(16).optional(),
+  // «Телепат»: игрок угадал слово меньше чем за 10 секунд.
+  telepath: z.boolean().optional(),
+})
+
 api.post('/solo/result', async c => {
-  const body = await c.req.json<{ won: boolean; score: number }>().catch(() => null)
-  if (!body) return c.json({ error: 'bad_request' }, 400)
-  const profile = recordResult(c.get('uid'), 'solo', !!body.won, Math.max(0, Math.min(9999, body.score | 0)))
+  const uid = c.get('uid')
+  const parsed = soloSchema.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_request' }, 400)
+  const { won, runId, telepath, players } = parsed.data
+  const score = Math.max(0, Math.min(9999, parsed.data.score | 0))
+  const profile = recordResult(uid, 'solo', won, score)
+  if (runId) {
+    reportMatch({
+      userId: uid,
+      idempotencyKey: `croc-solo-${uid}-${runId}`,
+      result: won ? 'win' : 'loss',
+      placement: null,
+      players: players ?? 1,
+      humanPlayers: 1,
+      score,
+      mode: 'solo',
+      opponents: [],
+      stats: telepath ? { signature: true } : undefined,
+    })
+  }
   return c.json({ profile })
 })
 
