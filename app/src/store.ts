@@ -18,8 +18,21 @@ import type { Profile, RoomStateDto } from '@shared/types'
 import { api } from './api'
 import { haptic } from './telegram'
 import { playSfx } from './sound'
+import { t, getLang } from './i18n'
+import { EN } from './strings'
 
 type Screen = 'home' | 'rules' | 'leaderboard' | 'lobby' | 'game'
+
+// Reverse lookup (English word -> Russian source word), so a player guessing
+// in English still matches the engine, which compares against the RU word.
+const EN_TO_RU: Record<string, string> = (() => {
+  const m: Record<string, string> = {}
+  for (const [ru, en] of Object.entries(EN)) {
+    const k = en.toLowerCase().trim()
+    if (!(k in m)) m[k] = ru
+  }
+  return m
+})()
 
 interface Standing { id: string; name: string; score: number; you: boolean }
 interface FinalInfo { youWon: boolean; youScore: number; winnerName: string; standings: Standing[] }
@@ -74,7 +87,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let soloRoundId = 0
 let flyId = 0
 // Прогон соло-партии: id заводится на старте и служит хабу ключом идемпотентности
-// (соло-партий сервер не ведёт). telepath — успел угадать меньше чем за 10 секунд.
+// (соло-партий сервер не ведёт). telepath - успел угадать меньше чем за 10 секунд.
 let soloRunId = ''
 let soloTelepath = false
 
@@ -100,7 +113,7 @@ export const useStore = create<S>((set, get) => {
         case 'wrong': if (e.playerId === youId) playSfx('wrong'); break
         case 'correct':
           playSfx('correct')
-          flash(e.playerId === youId ? `Угадал! +${e.points}` : `${e.name}: +${e.points}`, 'good')
+          flash(e.playerId === youId ? `${t('Угадал! +')}${e.points}` : `${t(e.name)}: +${e.points}`, 'good')
           break
         case 'roundEnd': break
         case 'gameEnd': break
@@ -113,8 +126,9 @@ export const useStore = create<S>((set, get) => {
     setTimeout(() => { if (get().fly?.id === id) set({ fly: null }) }, 950)
   }
   function toast(text: string) {
-    set({ toast: text })
-    setTimeout(() => { if (get().toast === text) set({ toast: null }) }, 1700)
+    const msg = t(text)
+    set({ toast: msg })
+    setTimeout(() => { if (get().toast === msg) set({ toast: null }) }, 1700)
   }
 
   // -- SOLO driver ---------------------------------------------------------
@@ -249,7 +263,7 @@ export const useStore = create<S>((set, get) => {
     if (pv && nv && nv.roundWinnerId && nv.roundWinnerId !== pv.roundWinnerId) {
       const youWon = nv.roundWinnerId === nv.youId
       playSfx(youWon ? 'correct' : 'reveal')
-      if (youWon) flash(`Угадал! +${nv.lastPoints}`, 'good')
+      if (youWon) flash(`${t('Угадал! +')}${nv.lastPoints}`, 'good')
     }
     // game finished -> show standings and stop hammering the finished room
     if (nv && nv.phase === 'finished' && prev?.view?.phase !== 'finished') {
@@ -379,8 +393,11 @@ export const useStore = create<S>((set, get) => {
       const clean = text.trim()
       if (!clean) return
       haptic('select')
-      if (get().mode === 'solo') soloApply({ type: 'guess', playerId: meId(), text: clean })
-      else onlineAct({ type: 'guess', playerId: meId(), text: clean })
+      // In English mode, map a recognized English guess back to its Russian
+      // source word so the engine (which stores RU words) accepts it.
+      const forEngine = getLang() === 'en' ? (EN_TO_RU[clean.toLowerCase()] ?? clean) : clean
+      if (get().mode === 'solo') soloApply({ type: 'guess', playerId: meId(), text: forEngine })
+      else onlineAct({ type: 'guess', playerId: meId(), text: forEngine })
     },
 
     giveUp() {

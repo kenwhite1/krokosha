@@ -1,7 +1,9 @@
 // Знак «Крокоши»: добродушный зелёный крокодил с облачком-подсказкой.
+import { t } from '../i18n'
+
 export function Logo({ size = 132, className = 'brand-logo' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 160 160" className={className} aria-label="Крокоша">
+    <svg width={size} height={size} viewBox="0 0 160 160" className={className} aria-label={t('Крокоша')}>
       <defs>
         <linearGradient id="croc-body" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#8ed897" />

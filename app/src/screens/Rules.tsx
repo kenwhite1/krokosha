@@ -1,4 +1,5 @@
 import { useStore } from '../store'
+import { t } from '../i18n'
 
 const RULES = [
   { ic: '🎤', t: 'Один ведущий за раунд', b: 'Каждый раунд один игрок становится ведущим и получает тайное слово. По очереди им будут все.' },
@@ -14,15 +15,15 @@ export function Rules() {
   return (
     <div className="page rise">
       <div className="page-head">
-        <button className="round-btn" onClick={() => go('home')} aria-label="Назад">‹</button>
-        <h1>Как играть</h1>
+        <button className="round-btn" onClick={() => go('home')} aria-label={t('Назад')}>‹</button>
+        <h1>{t('Как играть')}</h1>
       </div>
       {RULES.map((r, i) => (
         <div className="rule" key={i}>
           <span className="ic">{r.ic}</span>
           <div>
-            <div className="rt">{r.t}</div>
-            <div className="rb">{r.b}</div>
+            <div className="rt">{t(r.t)}</div>
+            <div className="rb">{t(r.b)}</div>
           </div>
         </div>
       ))}
@@ -31,7 +32,7 @@ export function Rules() {
         style={{ marginTop: 8 }}
         onClick={() => useStore.setState({ difficultyPick: 'solo' })}
       >
-        Сыграть 🐊
+        {t('Сыграть 🐊')}
       </button>
     </div>
   )

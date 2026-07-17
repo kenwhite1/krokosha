@@ -1,11 +1,11 @@
 // --- Менеджер онлайн-комнат ------------------------------------------------
-// Авторитетные на сервере партии в памяти (один инстанс на Railway). Соло —
+// Авторитетные на сервере партии в памяти (один инстанс на Railway). Соло -
 // полностью на клиенте и в этом модуле не нуждается; комнаты добавляют слой
 // «играй с друзьями».
 //
 // Два вида комнат:
-//   * friend  — создаётся по коду; пустые места заполняются (видимыми) ботами
-//   * quick   — публичный подбор; стартует сам и заполняется ботами, которых
+//   * friend  - создаётся по коду; пустые места заполняются (видимыми) ботами
+//   * quick   - публичный подбор; стартует сам и заполняется ботами, которых
 //               клиент видит как обычных игроков.
 //
 // Драйвер раунда живёт здесь: он крутит таймер раунда, за ведущего-бота
@@ -113,8 +113,8 @@ function doAction(room: Room, action: Action): void {
   room.lastActivity = Date.now()
 }
 
-// заполняем стол ботами. quick — человеческие имена и разная сложность, чтобы
-// читались как живые; friend — обычные боты с именами-табличками.
+// заполняем стол ботами. quick - человеческие имена и разная сложность, чтобы
+// читались как живые; friend - обычные боты с именами-табличками.
 function fillBots(room: Room): void {
   const used = new Set(room.seats.map(s => s.name))
   const pool = room.quick ? HUMAN_NAMES : BOT_NAMES
@@ -183,7 +183,7 @@ function scheduleBotReveal(room: Room, rid: number, diff: Difficulty): void {
     if (!ex?.isBot) return
     if (room.game.revealed < room.game.hints.length) {
       doAction(room, { type: 'reveal', playerId: ex.id })
-      scheduleBotGuesses(room, rid) // новая подсказка — новые попытки угадать
+      scheduleBotGuesses(room, rid) // новая подсказка - новые попытки угадать
     }
     if (room.game.phase !== 'explaining') return
     if (room.game.revealed < room.game.hints.length) {
@@ -243,7 +243,7 @@ function finalize(room: Room): void {
   const mode: MatchMode = room.quick ? 'multi' : 'friends'
   // winnerId движка при равенстве очков достаётся первому из равных, так что
   // «победа» по нему одна на всех ничейщиков. Для хаба считаем честно: делящие
-  // верхний счёт — ничья, а не «один выиграл, остальные проиграли».
+  // верхний счёт - ничья, а не «один выиграл, остальные проиграли».
   const top = Math.max(...room.game.players.map(p => p.score))
   const drawn = room.game.players.filter(p => p.score === top).length > 1
   const ranked = [...room.game.players].sort((a, b) => b.score - a.score)
@@ -253,7 +253,7 @@ function finalize(room: Room): void {
     const won = room.game.winnerId === seat.id
     recordResult(seat.tgId, 'online', won, me?.score ?? 0)
     // Рапорт хабу: room.scored выше гарантирует один раз на партию, а ключ
-    // идемпотентности (код+время создания комнаты) — что повтор не доплатит.
+    // идемпотентности (код+время создания комнаты) - что повтор не доплатит.
     reportMatch({
       userId: seat.tgId,
       idempotencyKey: `croc-${room.code}-${room.createdAt}-${seat.tgId}`,
@@ -414,7 +414,7 @@ export function actInRoom(code: string, tgId: number, action: Action): RoomState
   if (room.version === before) return { error: 'illegal' }
 
   // «Телепат»: угадал слово меньше чем за 10 секунд от начала раунда. Считаем
-  // до afterRoundEnd — тот гасит deadline, по которому и восстанавливается старт.
+  // до afterRoundEnd - тот гасит deadline, по которому и восстанавливается старт.
   if (action.type === 'guess' && deadline != null && room.game?.roundWinnerId === seat.id) {
     if (ROUND_MS - (deadline - Date.now()) < 10_000) room.telepaths.add(seat.id)
   }
@@ -467,7 +467,7 @@ export function leaveRoom(code: string, tgId: number): void {
   }
 }
 
-// уборка простаивающих комнат каждые 10 мин (30 мин простоя — удаляем)
+// уборка простаивающих комнат каждые 10 мин (30 мин простоя - удаляем)
 setInterval(() => {
   const now = Date.now()
   for (const [code, room] of rooms) {

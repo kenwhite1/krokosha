@@ -13,7 +13,7 @@ function rand(min: number, max: number): number {
   return min + Math.random() * (max - min)
 }
 
-// Пауза между подсказками, когда ведущий — бот (мс).
+// Пауза между подсказками, когда ведущий - бот (мс).
 export function botRevealIntervalMs(d: Difficulty): number {
   if (d === 'easy') return rand(2600, 3900) // щедрый: открывает быстро
   if (d === 'hard') return rand(5200, 7400) // скупой: заставляет думать
@@ -28,7 +28,7 @@ function guessProb(d: Difficulty, revealed: number): number {
   return revealed <= 1 ? 0.08 : revealed === 2 ? 0.46 : revealed === 3 ? 0.76 : 0.92
 }
 
-// Задержка реакции бота перед отправкой ответа (мс) — оставляет человеку шанс.
+// Задержка реакции бота перед отправкой ответа (мс) - оставляет человеку шанс.
 function guessDelay(d: Difficulty): number {
   if (d === 'hard') return rand(1300, 2600)
   if (d === 'easy') return rand(3200, 6000)

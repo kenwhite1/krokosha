@@ -28,10 +28,10 @@ export interface GameView {
   totalRounds: number
   category: string
   emoji: string
-  hints: string[] // видимые подсказки (все — ведущему, открытые — угадывающим)
+  hints: string[] // видимые подсказки (все - ведущему, открытые - угадывающим)
   revealed: number
   totalHints: number
-  word: string | null // ведущему всегда; угадывающим — только в конце раунда
+  word: string | null // ведущему всегда; угадывающим - только в конце раунда
   wordLength: number
   players: ViewPlayer[]
   guessFeed: ViewGuess[]

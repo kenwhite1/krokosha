@@ -4,7 +4,7 @@ import { validateInitData, issueToken, verifyToken } from './auth'
 import type { Env } from './env'
 import { getOrCreateUser, getProfile, recordResult, topPlayers } from './profiles'
 import { createRoom, joinRoom, quickMatch, startRoom, actInRoom, getRoomState, leaveRoom } from './rooms'
-import { storeLaunchToken, reportMatch } from './gg'
+import { storeLaunchToken, reportMatch, withHubCoins } from './gg'
 import { BOT_USERNAME } from './env'
 import type { Action } from '../../shared/engine'
 import type { Difficulty } from '../../shared/bots'
@@ -22,7 +22,8 @@ api.post('/auth', async c => {
   getOrCreateUser(v.user.id, name, v.user.username)
   storeLaunchToken(v.user.id, v.startParam)
   const token = await issueToken(v.user.id)
-  return c.json({ token, profile: getProfile(v.user.id), startParam: v.startParam, botUsername: BOT_USERNAME })
+  const profile = await withHubCoins(v.user.id, getProfile(v.user.id))
+  return c.json({ token, profile, startParam: v.startParam, botUsername: BOT_USERNAME })
 })
 
 // шлюз авторизации для всего ниже
@@ -35,7 +36,7 @@ api.use('/*', async (c, next) => {
   return next()
 })
 
-api.get('/profile', c => c.json({ profile: getProfile(c.get('uid')) }))
+api.get('/profile', async c => c.json({ profile: await withHubCoins(c.get('uid'), getProfile(c.get('uid'))) }))
 
 api.get('/leaderboard', c => c.json({ top: topPlayers(20) }))
 
@@ -44,10 +45,10 @@ const soloSchema = z.object({
   won: z.boolean(),
   score: z.number(),
   // id прогона: заводится клиентом на старте соло-партии и переживает повтор
-  // запроса. Хабу он нужен как ключ идемпотентности — сервер соло-партий не
+  // запроса. Хабу он нужен как ключ идемпотентности - сервер соло-партий не
   // ведёт, и другого стабильного идентификатора у неё нет.
   runId: z.string().max(64).regex(/^[A-Za-z0-9_-]+$/).optional(),
-  // размер соло-стола (игрок + боты) — его знает только клиент
+  // размер соло-стола (игрок + боты) - его знает только клиент
   players: z.number().int().min(1).max(16).optional(),
   // «Телепат»: игрок угадал слово меньше чем за 10 секунд.
   telepath: z.boolean().optional(),

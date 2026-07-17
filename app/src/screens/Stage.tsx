@@ -3,11 +3,12 @@ import { useStore } from '../store'
 import { Logo } from './Logo'
 import { StageScene } from './StageScene'
 import { toView, type GameView } from '@shared/view'
+import { t } from '../i18n'
 
 const CONFETTI = ['#5bbd6a', '#f4be2c', '#e1554b', '#2f93cf', '#f8d77e']
 
 export function Stage() {
-  // Compute the view from raw state with useMemo — never return a fresh object
+  // Compute the view from raw state with useMemo - never return a fresh object
   // straight from a zustand selector (that breaks useSyncExternalStore).
   const mode = useStore(s => s.mode)
   const solo = useStore(s => s.solo)
@@ -26,7 +27,7 @@ export function Stage() {
         <StageScene />
         <div className="stage-center" style={{ margin: 'auto' }}>
           <Logo size={120} className="host-mascot" />
-          <div className="host-line">Готовим сцену<span className="dots-anim" /></div>
+          <div className="host-line">{t('Готовим сцену')}<span className="dots-anim" /></div>
         </div>
       </div>
     )
@@ -54,8 +55,8 @@ export function Stage() {
         </div>
       )}
       <div className="topbar">
-        <button className="round-btn" onClick={leaveGame} aria-label="Выйти">‹</button>
-        <span className="round-pill">Раунд {view.round} из {view.totalRounds}</span>
+        <button className="round-btn" onClick={leaveGame} aria-label={t('Выйти')}>‹</button>
+        <span className="round-pill">{t('Раунд ')}{view.round}{t(' из ')}{view.totalRounds}</span>
         <TimerRing />
       </div>
 
@@ -66,14 +67,14 @@ export function Stage() {
           <Logo size={84} className="host-mascot" />
           <div className="host-line">
             {roundEnded
-              ? (view.solved ? <>Угадал(а) <b>{view.roundWinnerName}</b></> : <>Никто не угадал</>)
+              ? (view.solved ? <>{t('Угадал(а) ')}<b>{t(view.roundWinnerName ?? '')}</b></> : <>{t('Никто не угадал')}</>)
               : isExplainer
-                ? <>Ты ведущий. Намекай на слово!</>
-                : <>Ведущий: <b>{explainerName(view)}</b></>}
+                ? <>{t('Ты ведущий. Намекай на слово!')}</>
+                : <>{t('Ведущий: ')}<b>{t(explainerName(view))}</b></>}
           </div>
         </div>
 
-        <span className="cat-chip"><span className="ce">{view.emoji}</span>{view.category}</span>
+        <span className="cat-chip"><span className="ce">{view.emoji}</span>{t(view.category)}</span>
 
         <WordCard view={view} roundEnded={roundEnded} isExplainer={isExplainer} />
       </div>
@@ -82,7 +83,7 @@ export function Stage() {
 
       {roundEnded ? (
         <div className="stage-actions">
-          <div className="reveal-hint-tip">Следующий раунд начнётся через пару секунд<span className="dots-anim" /></div>
+          <div className="reveal-hint-tip">{t('Следующий раунд начнётся через пару секунд')}<span className="dots-anim" /></div>
         </div>
       ) : isExplainer ? (
         <ExplainerControls view={view} />
@@ -101,14 +102,14 @@ function WordCard({ view, roundEnded, isExplainer }: { view: GameView; roundEnde
   if (isExplainer || roundEnded) {
     return (
       <div className={`wordcard ${roundEnded ? 'revealed' : ''}`}>
-        <div className="wc-label">{roundEnded && !isExplainer ? 'Загаданное слово' : 'Твоё слово'}</div>
-        <div className="wc-word">{view.word}</div>
+        <div className="wc-label">{roundEnded && !isExplainer ? t('Загаданное слово') : t('Твоё слово')}</div>
+        <div className="wc-word">{t(view.word ?? '')}</div>
       </div>
     )
   }
   return (
     <div className="wordcard">
-      <div className="wc-label">Угадай слово</div>
+      <div className="wc-label">{t('Угадай слово')}</div>
       <div className="wordmask">
         {Array.from({ length: Math.max(3, view.wordLength) }).map((_, i) => <i key={i} />)}
       </div>
@@ -125,7 +126,7 @@ function Scoreboard({ view }: { view: GameView }) {
         return (
           <div key={p.id} className={`score-chip ${p.isExplainer ? 'explaining' : ''} ${won ? 'scored' : ''}`}>
             <span className="av">{initial(p.name)}</span>
-            <span className="nm">{p.id === view.youId ? 'Ты' : p.name}</span>
+            <span className="nm">{p.id === view.youId ? t('Ты') : t(p.name)}</span>
             {p.isExplainer && <span className="mic">🎤</span>}
             <span className="sc">{p.score}</span>
           </div>
@@ -154,21 +155,21 @@ function Feed({ view }: { view: GameView }) {
           <Logo size={64} className="host-mascot" />
           <div style={{ marginTop: 8 }}>
             {view.role === 'explainer'
-              ? 'Открой первую подсказку, чтобы помочь угадать'
-              : 'Ждём первую подсказку от ведущего…'}
+              ? t('Открой первую подсказку, чтобы помочь угадать')
+              : t('Ждём первую подсказку от ведущего…')}
           </div>
         </div>
       )}
       {shown.map((h, i) => (
         <div key={`h${i}`} className="bubble">
-          <div className="b-name">💡 Подсказка {i + 1}</div>
-          <div className="b-text">{h}</div>
+          <div className="b-name">💡 {t('Подсказка ')}{i + 1}</div>
+          <div className="b-text">{t(h)}</div>
         </div>
       ))}
       {view.guessFeed.map((g, i) => (
         <div key={`g${i}`} className={`bubble ${g.you ? 'you' : ''} ${g.correct ? 'correct' : ''}`}>
-          {!g.you && <div className="b-name">{g.name}</div>}
-          <div className="b-text">{g.correct ? `✅ ${g.text}` : g.text}</div>
+          {!g.you && <div className="b-name">{t(g.name)}</div>}
+          <div className="b-text">{g.correct ? `✅ ${t(g.text)}` : t(g.text)}</div>
         </div>
       ))}
     </div>
@@ -184,17 +185,17 @@ function ExplainerControls({ view }: { view: GameView }) {
   return (
     <div className="stage-actions">
       {!allOut && nextHint && (
-        <div className="reveal-hint-tip">Следующая подсказка: «{nextHint}»</div>
+        <div className="reveal-hint-tip">{t('Следующая подсказка: «')}{t(nextHint)}{t('»')}</div>
       )}
       {allOut ? (
-        <button className="btn cream block lg" onClick={giveUp}>Открыть слово 🐊</button>
+        <button className="btn cream block lg" onClick={giveUp}>{t('Открыть слово 🐊')}</button>
       ) : (
         <button className="btn block lg" onClick={revealHint}>
-          Открыть подсказку ({view.revealed + 1}/{view.totalHints})
+          {t('Открыть подсказку')} ({view.revealed + 1}/{view.totalHints})
         </button>
       )}
       <button className="btn ghost" style={{ alignSelf: 'center', padding: '8px 20px', color: 'var(--ink-soft)' }} onClick={giveUp}>
-        Сдаться
+        {t('Сдаться')}
       </button>
     </div>
   )
@@ -205,9 +206,9 @@ function GuessBar() {
   const [text, setText] = useState('')
 
   function send() {
-    const t = text.trim()
-    if (!t) return
-    submitGuess(t)
+    const g = text.trim()
+    if (!g) return
+    submitGuess(g)
     setText('')
   }
 
@@ -218,13 +219,13 @@ function GuessBar() {
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') send() }}
-        placeholder="Введи свою догадку…"
+        placeholder={t('Введи свою догадку…')}
         maxLength={40}
         autoComplete="off"
         autoCorrect="off"
         enterKeyHint="send"
       />
-      <button className="guess-send" onClick={send} aria-label="Отправить">➤</button>
+      <button className="guess-send" onClick={send} aria-label={t('Отправить')}>➤</button>
     </div>
   )
 }
