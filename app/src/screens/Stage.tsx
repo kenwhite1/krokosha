@@ -5,7 +5,7 @@ import { StageScene } from './StageScene'
 import { toView, type GameView } from '@shared/view'
 import { t } from '../i18n'
 
-const CONFETTI = ['#5bbd6a', '#f4be2c', '#e1554b', '#2f93cf', '#f8d77e']
+const CONFETTI = ['#7fb069', '#f2a93b', '#e2574c', '#f8d77e', '#fffaf0']
 
 export function Stage() {
   // Compute the view from raw state with useMemo - never return a fresh object

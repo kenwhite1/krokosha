@@ -10,7 +10,7 @@ import { APP_NAME } from './brand'
 import { t, useLang } from './i18n'
 import type { Difficulty } from '@shared/bots'
 
-const CONFETTI = ['#5bbd6a', '#f4be2c', '#e1554b', '#2f93cf', '#f8d77e']
+const CONFETTI = ['#7fb069', '#f2a93b', '#e2574c', '#f8d77e', '#fffaf0']
 const DIFFS: { d: Difficulty; t: string; s: string; emoji: string }[] = [
   { d: 'easy', t: 'Легко', s: 'Спокойная партия', emoji: '🌱' },
   { d: 'medium', t: 'Средне', s: 'Достойные соперники', emoji: '🎯' },

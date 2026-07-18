@@ -7,7 +7,7 @@ export function Logo({ size = 132, className = 'brand-logo' }: { size?: number; 
       <defs>
         <linearGradient id="croc-body" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#8ed897" />
-          <stop offset="1" stopColor="#3f9a4f" />
+          <stop offset="1" stopColor="#5e8e4a" />
         </linearGradient>
         <linearGradient id="croc-snout" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#73c97f" />
@@ -26,7 +26,7 @@ export function Logo({ size = 132, className = 'brand-logo' }: { size?: number; 
       <g transform="translate(108 30)">
         <rect x="-20" y="-18" width="58" height="40" rx="13" fill="#fffaf0" stroke="rgba(122,79,42,.14)" strokeWidth="2" />
         <circle cx="-4" cy="2" r="3.4" fill="#f2a93b" />
-        <circle cx="9" cy="2" r="3.4" fill="#5bbd6a" />
+        <circle cx="9" cy="2" r="3.4" fill="#7fb069" />
         <circle cx="22" cy="2" r="3.4" fill="#2f93cf" />
         <path d="M-14 18 L-20 30 L-2 21 Z" fill="#fffaf0" />
       </g>
