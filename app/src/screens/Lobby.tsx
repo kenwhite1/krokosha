@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store'
+import { HubInvite } from './HubInvite'
 import { shareLink, haptic } from '../telegram'
 import { APP_NAME } from '../brand'
 import { t } from '../i18n'
@@ -96,6 +97,7 @@ export function Lobby() {
           {t('Пригласить друзей 📨')}
         </button>
       </div>
+      <HubInvite />
 
       <div className="seatlist">
         {players.map(p => (

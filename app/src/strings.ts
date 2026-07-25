@@ -1,8 +1,13 @@
 // English translations keyed by the exact Russian source string.
 // Russian stays the default language; these are used when the app runs in EN.
 export const EN: Record<string, string> = {
+  // Приглашение друзей из хаба (screens/HubInvite.tsx)
+  'Позвать друзей из хаба': 'Invite friends from the hub',
+  'Позвать': 'Invite',
+  'Позвали': 'Invited',
+  'Позвать всех': 'Invite everyone',
   // --- brand / tagline ---
-  'Крокоша': 'Croaky',
+  'Крокоша': 'Croccy',
   'Угадывай слова по подсказкам': 'Guess words from clues',
   'Загадываем слово': 'Thinking of a word',
   'Намекай, угадывай и набирай очки': 'Give hints, guess and score points',
