@@ -4,6 +4,7 @@ import { Logo } from './Logo'
 import { StageScene } from './StageScene'
 import { toView, type GameView } from '@shared/view'
 import { t } from '../i18n'
+import { GGAvatar } from '../gg/GGAvatar'
 
 const CONFETTI = ['#7fb069', '#f2a93b', '#e2574c', '#f8d77e', '#fffaf0']
 
@@ -125,7 +126,7 @@ function Scoreboard({ view }: { view: GameView }) {
         const won = roundEnded && p.id === view.roundWinnerId
         return (
           <div key={p.id} className={`score-chip ${p.isExplainer ? 'explaining' : ''} ${won ? 'scored' : ''}`}>
-            <span className="av">{initial(p.name)}</span>
+            <span className="av"><GGAvatar id={p.id} fallback={<>{initial(p.name)}</>} /></span>
             <span className="nm">{p.id === view.youId ? t('Ты') : t(p.name)}</span>
             {p.isExplainer && <span className="mic">🎤</span>}
             <span className="sc">{p.score}</span>

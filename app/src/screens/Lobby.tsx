@@ -4,6 +4,7 @@ import { HubInvite } from './HubInvite'
 import { shareLink, haptic } from '../telegram'
 import { APP_NAME } from '../brand'
 import { t } from '../i18n'
+import { GGAvatar } from '../gg/GGAvatar'
 
 export function Lobby() {
   const room = useStore(s => s.room)
@@ -66,7 +67,7 @@ export function Lobby() {
         <div className="seatlist">
           {players.map(p => (
             <div className="seat" key={p.id}>
-              <span className="av">{p.name.charAt(0).toUpperCase()}</span>
+              <span className="av"><GGAvatar id={p.id} fallback={<>{p.name.charAt(0).toUpperCase()}</>} /></span>
               <span className="nm">{p.id === `u${profile?.id}` ? t('Ты') : t(p.name)}</span>
             </div>
           ))}
@@ -102,7 +103,7 @@ export function Lobby() {
       <div className="seatlist">
         {players.map(p => (
           <div className="seat" key={p.id}>
-            <span className="av">{p.name.charAt(0).toUpperCase()}</span>
+            <span className="av"><GGAvatar id={p.id} fallback={<>{p.name.charAt(0).toUpperCase()}</>} /></span>
             <span className="nm">{p.id === `u${profile?.id}` ? t('Ты') : t(p.name)}</span>
             {p.isHost ? <span className="tag host">{t('Хост')}</span> : p.isBot ? <span className="tag bot">{t('Бот')}</span> : <span className="tag wait">{t('Готов')}</span>}
           </div>
