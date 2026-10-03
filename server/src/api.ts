@@ -1,3 +1,4 @@
+import { setDisplayLanguage } from './gg'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { validateInitData, issueToken, verifyToken } from './auth'
@@ -21,6 +22,7 @@ api.post('/auth', async c => {
   const name = [v.user.first_name, v.user.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Игрок'
   getOrCreateUser(v.user.id, name, v.user.username)
   storeLaunchToken(v.user.id, v.startParam)
+  setDisplayLanguage(v.user.id, c.req.header('x-game-language'))
   const token = await issueToken(v.user.id)
   const profile = await withHubCoins(v.user.id, getProfile(v.user.id))
   return c.json({ token, profile, startParam: v.startParam, botUsername: BOT_USERNAME })
@@ -33,6 +35,7 @@ api.use('/*', async (c, next) => {
   const uid = token ? await verifyToken(token) : null
   if (!uid) return c.json({ error: 'unauthorized' }, 401)
   c.set('uid', uid)
+  setDisplayLanguage(uid, c.req.header('x-game-language'))
   return next()
 })
 

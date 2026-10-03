@@ -83,6 +83,8 @@ export async function withHubCoins(userId: number, profile: Profile | null): Pro
  *  Нужен серверу, чтобы подобрать соперникам имена на языке игрока. */
 export function userLang(userId: number | null | undefined): 'ru' | 'en' {
   if (userId == null) return 'ru'
+  const selected = displayLanguages.get(userId)
+  if (selected) return selected
   const token = launchTokenOf(userId)
   if (!token) return 'ru'
   try {
@@ -131,4 +133,11 @@ export async function inviteHubFriends(userId: number, friendIds: number[], note
   if (!token || friendIds.length === 0) return 0
   const r = (await hubCall('/api/sdk/invite', token, { friendIds, note })) as { ok: boolean; sent: number } | null
   return r?.ok ? r.sent : 0
+}
+
+// This preference only selects authored display text. It never authorizes a
+// reward, balance change or identity; those still use the verified launch.
+const displayLanguages = new Map<number, 'en' | 'ru'>()
+export function setDisplayLanguage(userId: number, value: string | undefined): void {
+  if (value === 'en' || value === 'ru') displayLanguages.set(userId, value)
 }
