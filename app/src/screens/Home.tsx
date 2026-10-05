@@ -12,20 +12,10 @@ export function Home() {
 
   return (
     <div className="home rise">
+      <div data-gg-pregame />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginBottom: 4 }}>
         {(['ru', 'en'] as const).map(l => (
-          <button
-            key={l}
-            onClick={() => setLang(l)}
-            style={{
-              border: 'none', cursor: 'pointer', borderRadius: 999,
-              padding: '5px 12px', fontWeight: 900, fontSize: 12,
-              background: lang === l ? 'var(--green)' : 'rgba(122,79,42,.12)',
-              color: lang === l ? '#fff' : 'var(--ink-soft)',
-            }}
-          >
-            {l.toUpperCase()}
-          </button>
+          null
         ))}
       </div>
 
