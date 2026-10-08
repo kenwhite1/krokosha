@@ -1,10 +1,16 @@
+import { initGameVolume, getGameVolume, setGameVolume, subscribeGameVolume, gameAudioOutput, installGameVolume } from './gameVolume'
 // Крошечные синтезированные эффекты через WebAudio: без файлов, работают офлайн.
 // Создаётся лениво при первом проигрывании (webview Telegram требует жеста).
 let ctx: AudioContext | null = null
 let muted = localStorage.getItem('krMuted') === '1'
+initGameVolume(muted ? 0 : 1)
+muted = getGameVolume() === 0
+subscribeGameVolume(v => { muted = v === 0 })
+installGameVolume()
 
 export function isSoundOn(): boolean { return !muted }
 export function setSoundOn(on: boolean): void {
+  setGameVolume(on ? getGameVolume() || 1 : 0)
   muted = !on
   localStorage.setItem('krMuted', muted ? '1' : '0')
 }
@@ -27,7 +33,7 @@ function blip(c: AudioContext, freq: number, at: number, dur: number, type: Osci
   g.gain.setValueAtTime(0.0001, at)
   g.gain.exponentialRampToValueAtTime(peak, at + 0.012)
   g.gain.exponentialRampToValueAtTime(0.0001, at + dur)
-  o.connect(g); g.connect(c.destination)
+  o.connect(g); g.connect(gameAudioOutput(c))
   o.start(at); o.stop(at + dur + 0.02)
 }
 
